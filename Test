@@ -1,76 +1,7 @@
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import KFold
 from statsmodels.genmod.ordinal_model import OrderedModel
-from itertools import combinations
-
-def stepwise_selection_ordered(X, y, initial_list=[], criterion='aic', direction='both'):
-    """
-    Perform a forward, backward, or bidirectional stepwise selection of variables based on the given criterion
-    for an ordered model.
-    
-    Parameters:
-        X (DataFrame): Independent variables.
-        y (Series): Dependent variable.
-        initial_list (list): Initial list of variables to start the selection process.
-        criterion (str): Criterion for model evaluation. Default is 'aic'.
-        direction (str): Direction of stepwise selection, 'forward', 'backward', or 'both'. Default is 'both'.
-    
-    Returns:
-        list: List of selected variables.
-    """
-    included = list(initial_list)
-    while True:
-        changed = False
-        # Forward step
-        if direction in ('forward', 'both'):
-            excluded = list(set(X.columns) - set(included))
-            new_criteria = {}
-            for new_column in excluded:
-                model = OrderedModel(y, X[included + [new_column]]).fit()
-                if criterion == 'aic':
-                    new_criteria[new_column] = model.aic
-                elif criterion == 'bic':
-                    new_criteria[new_column] = model.bic
-                else:
-                    raise ValueError("Criterion must be 'aic' or 'bic'.")
-            best_criterion = min(new_criteria.values())
-            if best_criterion < model.aic:
-                best_feature = min(new_criteria, key=new_criteria.get)
-                included.append(best_feature)
-                changed = True
-                print(f'Forward Selection: Added {best_feature} with {criterion} {best_criterion:.4f}')
-        
-        # Backward step
-        if direction in ('backward', 'both'):
-            model = OrderedModel(y, X[included]).fit()
-            if criterion == 'aic':
-                current_criterion = model.aic
-            elif criterion == 'bic':
-                current_criterion = model.bic
-            else:
-                raise ValueError("Criterion must be 'aic' or 'bic'.")
-            worst_criterion = current_criterion
-            for feature in included:
-                temp_included = included.copy()
-                temp_included.remove(feature)
-                temp_model = OrderedModel(y, X[temp_included]).fit()
-                if criterion == 'aic':
-                    temp_criterion = temp_model.aic
-                elif criterion == 'bic':
-                    temp_criterion = temp_model.bic
-                else:
-                    raise ValueError("Criterion must be 'aic' or 'bic'.")
-                if temp_criterion < worst_criterion:
-                    worst_criterion = temp_criterion
-                    worst_feature = feature
-            if worst_criterion < current_criterion:
-                included.remove(worst_feature)
-                changed = True
-                print(f'Backward Elimination: Removed {worst_feature} with {criterion} {worst_criterion:.4f}')
-        
-        if not changed:
-            break
-    return included
 
 # Example data
 np.random.seed(0)
@@ -82,10 +13,26 @@ X = pd.DataFrame({
 })
 y = pd.Series(np.random.randint(0, 3, n))
 
-# Perform stepwise selection for ordered model
-selected_variables = stepwise_selection_ordered(X, y, criterion='aic', direction='both')
-print("Selected Variables:", selected_variables)
+# Define number of folds for cross-validation
+num_folds = 5
+kf = KFold(n_splits=num_folds)
 
-# Fit final model with selected variables
-final_model = OrderedModel(y, X[selected_variables]).fit()
-print(final_model.summary())
+# Initialize lists to store results
+results = []
+
+# Perform cross-validation
+for train_index, test_index in kf.split(X):
+    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    
+    # Fit OrderedModel on training data
+    model = OrderedModel(y_train, X_train).fit()
+    
+    # Evaluate model on test data
+    predicted = model.predict(X_test)
+    accuracy = (predicted == y_test).mean()
+    results.append(accuracy)
+
+# Calculate mean accuracy across folds
+mean_accuracy = np.mean(results)
+print("Mean Cross-Validation Accuracy:", mean_accuracy)
