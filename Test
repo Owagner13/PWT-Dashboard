@@ -1,38 +1,9 @@
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import KFold
-from statsmodels.genmod.ordinal_model import OrderedModel
+forest_importances = pd.Series(rf_ames.feature_importances_, index = rf_ames.feature_names_in_)
 
-# Example data
-np.random.seed(0)
-n = 100
-X = pd.DataFrame({
-    'x1': np.random.randn(n),
-    'x2': np.random.randn(n),
-    'x3': np.random.randn(n),
-})
-y = pd.Series(np.random.randint(0, 3, n))
+fig, ax = plt.subplots()
+forest_importances.plot.bar(ax = ax)
+ax.set_title("Feature importances")
+ax.set_ylabel("Mean decrease in impurity")
+fig.tight_layout()
 
-# Define number of folds for cross-validation
-num_folds = 5
-kf = KFold(n_splits=num_folds)
-
-# Initialize lists to store results
-results = []
-
-# Perform cross-validation
-for train_index, test_index in kf.split(X):
-    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
-    
-    # Fit OrderedModel on training data
-    model = OrderedModel(y_train, X_train).fit()
-    
-    # Evaluate model on test data
-    predicted = model.predict(X_test)
-    accuracy = (predicted == y_test).mean()
-    results.append(accuracy)
-
-# Calculate mean accuracy across folds
-mean_accuracy = np.mean(results)
-print("Mean Cross-Validation Accuracy:", mean_accuracy)
+plt.show()
