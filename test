@@ -1,0 +1,2 @@
+html.I(className="fas fa-star", style={'font-size': '48px', 'color': 'gold'})
+], style={'textAlign': 'center'})
