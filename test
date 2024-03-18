@@ -1,25 +1,24 @@
-ef calculate_precision_recall(y_true, y_pred):
-    true_positives = 0
-    false_positives = 0
-    false_negatives = 0
-
-    for true, pred in zip(y_true, y_pred):
-        if true == 1 and pred == 1:
-            true_positives += 1
-        elif true == 0 and pred == 1:
-            false_positives += 1
-        elif true == 1 and pred == 0:
-            false_negatives += 1
-
-    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) != 0 else 0
-    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) != 0 else 0
-
-    return precision, recall
-
-# Example usage:
-y_true = [1, 0, 1, 1, 0]
-y_pred = [1, 1, 0, 1, 0]
-
-precision, recall = calculate_precision_recall(y_true, y_pred)
-print("Precision:", precision)
-print("Recall:", recall)
+# Example confusion matrix (replace with your own)
+confusion_matrix = np.array([[50, 5, 0, 0, 0],    # Actual level 1
+                              [10, 40, 10, 0, 0],  # Actual level 2
+                              [0, 10, 40, 10, 0],  # Actual level 3
+                              [0, 0, 10, 40, 10],  # Actual level 4
+                              [0, 0, 0, 5, 50]])  # Actual level 5
+# Function to calculate precision, recall, and F1 score
+def calculate_f1_score(conf_matrix):
+    f1_scores = []
+    for i in range(conf_matrix.shape[0]):
+        true_positives = conf_matrix[i, i]
+        false_positives = sum(conf_matrix[:, i]) - true_positives
+        false_negatives = sum(conf_matrix[i, :]) - true_positives
+        precision = true_positives / (true_positives + false_positives)
+        recall = true_positives / (true_positives + false_negatives)
+        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        f1_scores.append(f1)
+    return f1_scores
+# Calculate F1 score for each class
+f1_scores = calculate_f1_score(confusion_matrix)
+# Average F1 score
+average_f1_score = np.mean(f1_scores)
+print("F1 Scores for each class:", f1_scores)
+print("Average F1 Score:", average_f1_score)
