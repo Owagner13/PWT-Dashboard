@@ -15,7 +15,13 @@ param_grid = {
     'criterion': ['gini', 'entropy'],
     'max_depth': [None, 5, 10, 15],
     'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4]
+    'min_samples_leaf': [1, 2, 4],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'splitter': ['best', 'random'],
+    'max_leaf_nodes': [None, 5, 10, 20],
+    'min_impurity_decrease': [0.0, 0.1, 0.2],
+    'ccp_alpha': [0.0, 0.1, 0.2],
+    'class_weight': [None, 'balanced']
 }
 
 # Instantiate the DecisionTreeClassifier
